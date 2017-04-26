@@ -11,7 +11,7 @@ const questions = Array
     return Question.create({
       title: `${faker.hacker.adjective()} ${faker.hacker.noun()}`,
       description: faker.hacker.phrase()
-    })
+    }).catch(function (error){console.log(error)})
   })
 
 module.exports = {
@@ -24,12 +24,10 @@ module.exports = {
   },
 
   down: function (queryInterface, Sequelize) {
-    /*
-      Add reverting commands here.
-      Return a promise to correctly handle asynchronicity.
+     // queryInterface is an object that has methods to directly
+     // query our database skipping models
+     // TODO: find list of queries for queryInterface
+    return queryInterface.bulkDelete('Questions', null, {});
 
-      Example:
-      return queryInterface.bulkDelete('Person', null, {});
-    */
   }
 };
