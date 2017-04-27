@@ -1,13 +1,13 @@
 const express = require('express');
-//the express.Router() method optional takes object to
 const router = express.Router();
 
-const Question = require('../models/index').Question;
 const answers = require('./answers');
+
+const Question = require('../models/index').Question;
 // ð NEW! Destructuring
 // const {Question} = require('../models/index');
 
-// Questions#index URL: /questions VERB:GET
+// Questions#index URL: /questions VERB: GET
 router.get('/', function (request, response, next) {
   Question
     .findAll({order: [['createdAt', 'DESC'], ['updatedAt', 'DESC']]}) // this returns promise...
@@ -26,11 +26,11 @@ router.get('/', function (request, response, next) {
 router.get('/new', function (req, res) {
   const question = Question.build();
 
-
   res.render('questions/new', {question: question});
 })
 
-router.post('/', function (req, res) {
+// Questions#create URL: /questions VERB: POST
+router.post('/', function (req, res, next) {
   // .body is a property of the request object that
   // contains all form data as a JavaScript object
   // res.send(req.body);
@@ -42,11 +42,13 @@ router.post('/', function (req, res) {
 
   Question
     .create({title: title, description: description})
-    .then(function (question){
+    .then(function (question) {
       res.redirect('/questions');
     })
+    .catch(function (err) {
+      next(err);
+    })
 })
-
 
 // Questions#destroy URL: /questions/:id VERB: DELETE
 router.delete('/:id', function (req, res) {
@@ -54,11 +56,38 @@ router.delete('/:id', function (req, res) {
 
   Question
     .findById(id)
-    .then(function (question){ return question.destroy()})
-    .then(function () { res.redirect('/questions')});
-
+    .then(function (question) { return question.destroy() })
+    .then(function() { res.redirect('/questions') });
 })
 
+// Questions#edit URL:  /questions/:id/edit VERB: GET
+router.get('/:id/edit', function (req, res) {
+  const id = req.params.id;
+
+  Question
+    .findById(id)
+    .then(function (question) {
+      res.render('questions/edit', {question: question})
+    })
+})
+
+
+// Questions#update URL: /questions/:id VERB: PATCH
+router.patch('/:id', function (req, res, next) {
+  const id = req.params.id;
+
+  Question
+    .findById(id)
+    .then(function (question) {
+      return question.update(
+        {title: req.body.title, description: req.body.description}
+      );
+    })
+    .then(function (question) {
+      res.redirect(`/questions/${id}`)
+    })
+    .catch(function (err) { next(err) })
+})
 
 
 // Questions#show URL: /questions/:id VERB: GET
@@ -69,20 +98,35 @@ router.get('/:id', function (req, res) {
   Question
     .findById(id)
     .then(function (question) {
-      return Promise.all([question, question.getAnswers({order: [['createdAt', 'DESC'],['updatedAt','DESC']]})])
+      return Promise.all([
+        question,
+        question.getAnswers({order: [['createdAt', 'DESC']]})
+      ])
     })
     // NEW! Array Destructuring
     // const [first, second, ...rest] = [1, 2, 3, 4, 5, 6]
-    // first === 1, second === 2, rest === [3, 4, 5, 6]
+    // first === 1; second === 2, rest === [3, 4, 5. 6]
     // ð can also be done with function arguments ð
     // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Destructuring_assignment
     .then(function ([question, answers]) {
       res.render('questions/show', {question: question, answers: answers})
     })
-
 })
 
 // URL: /questions/:questionId/answers VERB: All of them!
 router.use('/:questionId/answers', answers);
 
 module.exports = router;
+
+
+
+
+
+
+
+
+
+
+
+
+/* */
